@@ -6,4 +6,24 @@
     </style>
 
     <style name="Theme.PoseExercise" parent="Base.Theme.PoseExercise" />
+
+    <style name="StandardInputStyle" parent="Widget.AppCompat.EditText">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">50dp</item>
+        <item name="android:layout_marginHorizontal">38dp</item>
+        <item name="android:background">@drawable/rounded_grey</item>
+        <item name="android:fontFamily">@font/poppins_regular</item>
+        <item name="android:paddingStart">29dp</item>
+        <item name="android:paddingEnd">29dp</item>
+        <item name="android:textColor">@color/black</item>
+        <item name="android:singleLine">true</item>
+    </style>
+
+    <style name="DateInputStyle" parent="StandardInputStyle">
+        <item name="android:layout_width">0dp</item>
+        <item name="android:layout_weight">1</item>
+        <item name="android:layout_marginHorizontal">0dp</item>
+        <item name="android:paddingEnd">10dp</item>
+        <item name="android:inputType">date</item>
+    </style>
 </resources>

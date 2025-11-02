@@ -13,6 +13,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.example.physioquest.R
+import com.example.physioquest.views.activity.MainActivity
 import java.util.Calendar
 
 class RegisterActivity : AppCompatActivity() {
