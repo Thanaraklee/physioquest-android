@@ -9,7 +9,7 @@
 
     <style name="StandardInputStyle" parent="Widget.AppCompat.EditText">
         <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">50dp</item>
+        <item name="android:layout_height">45dp</item>
         <item name="android:layout_marginHorizontal">38dp</item>
         <item name="android:background">@drawable/rounded_grey</item>
         <item name="android:fontFamily">@font/poppins_regular</item>
