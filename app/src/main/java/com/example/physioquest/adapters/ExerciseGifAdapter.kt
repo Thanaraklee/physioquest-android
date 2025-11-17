@@ -14,7 +14,7 @@ import com.example.physioquest.R
  */
 class ExerciseGifAdapter(
     private val exerciseGifs: List<Pair<String, Int>>,
-    private val onSkipClickListener: () -> Unit
+    private val onSkipClickListener: (Int) -> Unit
 ) : RecyclerView.Adapter<ExerciseGifAdapter.ViewHolder>() {
 
     // Create ViewHolder instances for each item in the RecyclerView
@@ -33,7 +33,7 @@ class ExerciseGifAdapter(
 
         // Set onClickListener for the Skip button
         holder.skipButton.setOnClickListener {
-            onSkipClickListener.invoke()
+            onSkipClickListener(position)
         }
     }
 
@@ -41,6 +41,8 @@ class ExerciseGifAdapter(
     override fun getItemCount(): Int {
         return exerciseGifs.size
     }
+
+    fun getExerciseName(position: Int): String = exerciseGifs[position].first
 
     // ViewHolder class holds references to the UI components for each item
     inner class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {

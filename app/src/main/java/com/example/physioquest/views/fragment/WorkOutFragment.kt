@@ -34,6 +34,8 @@ import androidx.fragment.app.Fragment
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.Navigation
+import androidx.preference.isNotEmpty
+import androidx.preference.size
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager2.widget.ViewPager2
@@ -138,7 +140,8 @@ class WorkOutFragment : Fragment(), MemoryManagement {
     private lateinit var skipButton: Button
     private lateinit var textToSpeech: TextToSpeech
     private lateinit var yogaPoseImage: ImageView
-
+    private lateinit var exerciseGifAdapter: ExerciseGifAdapter
+    private var selectedExercise: String? = null
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!allRuntimePermissionsGranted()) {
@@ -188,11 +191,13 @@ class WorkOutFragment : Fragment(), MemoryManagement {
         super.onViewCreated(view, savedInstanceState)
         previewView = view.findViewById(R.id.preview_view)
         val gifContainer: FrameLayout = view.findViewById(R.id.gifContainer)
+        val viewPager: ViewPager2 = view.findViewById(R.id.exerciseViewPager)
         graphicOverlay = view.findViewById(R.id.graphic_overlay)
         cameraFlipFAB.visibility = View.VISIBLE
         startButton.visibility = View.VISIBLE
         gifContainer.visibility = View.GONE
         skipButton.visibility = View.GONE
+        val exerciseGifs = mutableListOf<Pair<String, Int>>()
 
 
         // start exercise button
@@ -209,9 +214,15 @@ class WorkOutFragment : Fragment(), MemoryManagement {
             buttonCancelExercise.visibility = View.VISIBLE
             buttonCompleteExercise.visibility = View.VISIBLE
             startButton.visibility = View.GONE
+
             // To disable screen timeout
             //window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
             cameraViewModel.triggerClassification.value = true
+            cameraViewModel.postureLiveData.observe(viewLifecycleOwner) { postureMap ->
+                postureMap?.forEach { (poseName, result) ->
+                    Log.d("PoseDetection", "Detected pose: $poseName")
+                }
+            }
         }
 
         // Cancel the exercise
@@ -286,9 +297,12 @@ class WorkOutFragment : Fragment(), MemoryManagement {
             activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
             // update the workoutResultData in MainActivity
-            cameraViewModel.postureLiveData.value?.let {
+            cameraViewModel.postureLiveData.value?.let { mapResult ->
+                val targetClass = databaseNameToClassification(selectedExercise ?: return@let)
                 val builder = StringBuilder()
-                for ((key, value) in it) {
+                for ((key, value) in mapResult) {
+                    if (key != targetClass) continue
+
                     if (value.repetition != 0 && key in onlyExercise) {
                         builder.append("${exerciseNameToDisplay(value.postureType)}: ${value.repetition}\n")
                     } else if (key in onlyPose) {
@@ -355,8 +369,30 @@ class WorkOutFragment : Fragment(), MemoryManagement {
             addExerciseIfNotPresent(exerciseNameToDisplay(WARRIOR_CLASS))
             addExerciseIfNotPresent(exerciseNameToDisplay(YOGA_TREE_CLASS))
 
-            val viewPager: ViewPager2 = view.findViewById(R.id.exerciseViewPager)
-            val exerciseGifAdapter = ExerciseGifAdapter(exerciseGifs) {
+            exerciseGifAdapter = ExerciseGifAdapter(exerciseGifs) { position ->
+                val selectedExerciseName = exerciseGifAdapter.getExerciseName(position)
+                selectedExercise = selectedExerciseName // เก็บท่าที่เลือก
+                Log.d(
+                    "ExerciseSelection",
+                    "User selected exercise: $selectedExerciseName at position: $position"
+                )
+
+                val targetClass = databaseNameToClassification(selectedExerciseName)
+                if (exerciseLog.getExerciseData(targetClass) == null) {
+                    exerciseLog.addExercise(
+                        null,
+                        targetClass,
+                        0,      // เริ่มต้น repetition
+                        0f,     // confidence เริ่มต้น
+                        false
+                    )
+                }
+                // อัปเดต UI ตั้งแต่ต้น
+                currentExerciseTextView.text = selectedExerciseName
+                currentRepetitionTextView.text = "0"
+                currentExerciseTextView.visibility = View.VISIBLE
+                currentRepetitionTextView.visibility = View.VISIBLE
+
                 // Handle skip button click here
                 // Transition to the "Start" button
                 startButton.visibility = View.GONE
@@ -403,148 +439,127 @@ class WorkOutFragment : Fragment(), MemoryManagement {
         var previousKey: String? = null
         var previousConfidence: Float? = null
 
+// Define sets for clarity
+        val exercisePoses = setOf("squats", "lunges")   // exercise repetitions
+        val yogaPoses = setOf("tree_pose", "warrior") // yoga confidence only
+
         cameraViewModel.postureLiveData.observe(viewLifecycleOwner) { mapResult ->
+            val targetClass = databaseNameToClassification(selectedExercise ?: return@observe)
+
+            val selectedPose = selectedExercise ?: return@observe
+            Log.d("ExerciseObserver", "Observing postureLiveData for selectedPose: $selectedPose, targetClass: $targetClass")
+
             for ((key, value) in mapResult) {
-                // Visualize the repetition exercise data
-                if (key in POSE_CLASSES.toList()) {
-                    // get the data from exercise log of specific exercise
-                    val data = exerciseLog.getExerciseData(key)
-                    if (key in onlyExercise && data == null) {
-                        // Adding exercise for the first time
-                        exerciseLog.addExercise(
-                            null,
+                // Skip poses not in POSE_CLASSES or not the selected one
+                if (key !in POSE_CLASSES || key != targetClass) continue
+
+                val data = exerciseLog.getExerciseData(key)
+                val isComplete = data?.isComplete ?: false
+
+                val drawableId = getDrawableResourceIdByExercise(key) // ฟังก์ชัน map key -> drawable
+                yogaPoseImage.setImageResource(drawableId)
+                yogaPoseImage.visibility = View.VISIBLE
+
+                // --- Exercise repetition handling ---
+                if (key in exercisePoses) {
+                    val newRepetition = value.repetition
+                    exerciseLog.addExercise(data?.planId, key, newRepetition, value.confidence, isComplete)
+                    // Update UI
+                    currentExerciseTextView.text = exerciseNameToDisplay(key)
+                    currentRepetitionTextView.text = newRepetition.toString()
+                    currentExerciseTextView.visibility = View.VISIBLE
+                    currentRepetitionTextView.visibility = View.VISIBLE
+
+                    // Hide yoga views
+                    confidenceTextView.visibility = View.INVISIBLE
+
+                    // Check goal completion
+                    var repetitionGoal = databaseExercisePlan.find {
+                        it.exerciseName.equals(
                             key,
-                            value.repetition,
-                            value.confidence,
-                            false
+                            ignoreCase = true
                         )
-                    } else if (key in onlyExercise && value.repetition == data?.repetitions?.plus(1)) {
-                        // workoutRecyclerView.visibility = View.VISIBLE
-                        if (isAllWorkoutFinished) {
-                            completeAllExercise.visibility = View.VISIBLE
-                        } else {
-                            completeAllExercise.visibility = View.GONE
+                    }?.repetitions
+
+                    if (repetitionGoal == null || repetitionGoal == 0) repetitionGoal = HighCount
+
+                    if (!isComplete && newRepetition >= repetitionGoal) {
+                        Log.d(
+                            "ExerciseObserver",
+                            "Exercise $key completed at repetition $newRepetition"
+                        )
+                        exerciseLog.addExercise(
+                            data?.planId,
+                            key,
+                            newRepetition,
+                            value.confidence,
+                            true
+                        )
+                        synthesizeSpeech("${exerciseNameToDisplay(key)} exercise Complete")
+
+                        if (exerciseLog.areAllExercisesCompleted(databaseExercisePlan)) {
+                            Handler(Looper.getMainLooper()).postDelayed({
+                                synthesizeSpeech("Congratulations! All planned exercise completed")
+                                isAllWorkoutFinished = true
+                                completeAllExercise.visibility = View.VISIBLE
+                            }, 1000)
                         }
-                        confIndicatorView.visibility = View.INVISIBLE
-                        confidenceTextView.visibility = View.INVISIBLE
-                        yogaPoseImage.visibility = View.INVISIBLE
-                        // check if the exercise target is complete
-                        var repetition: Int? = databaseExercisePlan.find {
-                            it.exerciseName.equals(
-                                key,
-                                ignoreCase = true
-                            )
-                        }?.repetitions
-                        if (repetition == null || repetition == 0) {
-                            repetition = HighCount
-                        }
-                        if (!data.isComplete && (value.repetition >= repetition)) {
-                            // Adding data only when the increment happen
-                            exerciseLog.addExercise(
-                                data.planId,
-                                key,
-                                value.repetition,
-                                value.confidence,
-                                true
-                            )
-                            // inform the user about completion only once
-                            synthesizeSpeech(exerciseNameToDisplay(key) + " exercise Complete")
-                            // check if all the exercise list complete if yes tell all exercise is complete
-                            if (exerciseLog.areAllExercisesCompleted(databaseExercisePlan)) {
-                                val handler = Handler(Looper.getMainLooper())
-                                handler.postDelayed({
-                                    synthesizeSpeech("Congratulation! all the planned exercise completed")
-                                    isAllWorkoutFinished = true
-                                    completeAllExercise.visibility = View.VISIBLE
-                                }, 5000)
+
+                        // Update DB
+                        data?.planId?.let { planId ->
+                            lifecycleScope.launch(Dispatchers.IO) {
+                                addPlanViewModel.updateComplete(
+                                    true,
+                                    System.currentTimeMillis(),
+                                    planId
+                                )
                             }
-                            // Update complete status for existing plan
-                            if (data.planId != null) {
-                                lifecycleScope.launch(Dispatchers.IO) {
-                                    addPlanViewModel.updateComplete(
-                                        true,
-                                        System.currentTimeMillis(),
-                                        data.planId
-                                    )
-                                }
-                            }
-                        } else if (data.isComplete) {
-                            // Adding data only when the increment happen
-                            exerciseLog.addExercise(
-                                data.planId,
-                                key,
-                                value.repetition,
-                                value.confidence,
-                                true
-                            )
-                        } else {
-                            // Adding data only when the increment happen
-                            exerciseLog.addExercise(
-                                data.planId,
-                                key,
-                                value.repetition,
-                                value.confidence,
-                                false
-                            )
                         }
-                        // display Current result when the increment happen
-                        displayResult(key, exerciseLog)
+                    }
+                }
 
-                        // update the display list of all exercise progress when the increment happen
-                        val exerciseList = exerciseLog.getExerciseDataList()
-                        workoutAdapter = WorkoutAdapter(exerciseList, databaseExercisePlan)
-                        // workoutRecyclerView.adapter = workoutAdapter
-                    } else if (key in onlyPose && value.confidence > 0.5) {
+                // --- Yoga confidence handling ---
+                else if (key in yogaPoses) {
+                    Log.d(
+                        "ExerciseObserver",
+                        "Yoga $key detected with confidence ${value.confidence}"
+                    )
 
-                        if (key !== previousKey || value.confidence !== previousConfidence) {
-                            // Implementation of pose confidence
-                            displayConfidence(key, value.confidence)
-                            // workoutRecyclerView.visibility = View.GONE
-                            completeAllExercise.visibility = View.GONE
-                            currentExerciseTextView.visibility = View.VISIBLE
-                            currentRepetitionTextView.visibility = View.GONE
-                            confidenceTextView.visibility = View.VISIBLE
-                            currentExerciseTextView.text = exerciseNameToDisplay(key)
-                            confidenceTextView.text = getString(
-                                R.string.confidence_percentage,
-                                (value.confidence * 100).toInt()
-                            )
-                            yogaPoseImage.visibility = View.VISIBLE
+                    if (key != previousKey || value.confidence != previousConfidence) {
+                        currentExerciseTextView.text = exerciseNameToDisplay(key)
+                        currentExerciseTextView.visibility = View.VISIBLE
 
-                            if (key !== previousKey) {
-                                yogaPoseImage.setImageResource(getDrawableResourceIdYoga(key))
-                            }
+                        confidenceTextView.text = getString(
+                            R.string.confidence_percentage,
+                            (value.confidence * 100).toInt()
+                        )
+                        confidenceTextView.visibility =
+                            if (value.confidence > 0.8) View.VISIBLE else View.INVISIBLE
 
-                            // Update previous values
-                            previousKey = key
-                            previousConfidence = value.confidence
-                        }
-                    } else if (key == previousKey && value.confidence < 0.6) {
-                        confIndicatorView.visibility = View.INVISIBLE
-                        confidenceTextView.visibility = View.INVISIBLE
-                        yogaPoseImage.visibility = View.INVISIBLE
+                        // Hide exercise repetition
+                        currentRepetitionTextView.visibility = View.GONE
+
+                        previousKey = key
+                        previousConfidence = value.confidence
                     }
                 }
             }
 
-            // Visualize list of all exercise result for the first time, to show the target exercise
+            // --- First time setup ---
             if (!runOnce) {
                 val exerciseList = exerciseLog.getExerciseDataList()
                 workoutAdapter = WorkoutAdapter(exerciseList, databaseExercisePlan)
-                // workoutRecyclerView.adapter = workoutAdapter
                 runOnce = true
                 loadingTV.visibility = View.GONE
                 loadProgress.visibility = View.GONE
-                synthesizeSpeech("ready to start")
+                synthesizeSpeech("Ready to start")
                 startMediaTimer()
                 timerTextView.visibility = View.VISIBLE
                 timerRecordIcon.visibility = View.VISIBLE
             }
         }
     }
-
-
-    // Map the notCompletedExercise list to a list of pairs to show gifs
+        // Map the notCompletedExercise list to a list of pairs to show gifs
     private fun mapExerciseToDrawable(exercise: String): Int {
         return when (exercise) {
             exerciseNameToDisplay(PUSHUPS_CLASS) -> R.drawable.pushup
@@ -563,14 +578,16 @@ class WorkOutFragment : Fragment(), MemoryManagement {
     /**
      * List of yoga images
      */
-    private val yogaPoseImages = mapOf(
+    private val poseImages = mapOf(
+        SQUATS_CLASS to R.drawable.squat,
+        LUNGES_CLASS to R.drawable.reverse_lunges,
         WARRIOR_CLASS to R.drawable.warrior_yoga_pose,
         YOGA_TREE_CLASS to R.drawable.tree_yoga_pose
     )
 
-    private fun getDrawableResourceIdYoga(yogaPoseKey: String): Int {
-        return yogaPoseImages[yogaPoseKey]
-            ?: throw IllegalArgumentException("Invalid yoga pose key: $yogaPoseKey")
+    private fun getDrawableResourceIdByExercise(poseKey: String): Int {
+        return poseImages[poseKey]
+            ?: throw IllegalArgumentException("Invalid yoga pose key: $poseKey")
     }
 
     /**

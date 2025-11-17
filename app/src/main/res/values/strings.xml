@@ -167,6 +167,7 @@
     <string name="sit_up">Sit Up</string>
     <string name="sit_up_a_day">20 Sit up a day</string>
     <string name="skip">Skip all</string>
+    <string name="select">Select</string>
     <string name="_00_00">00:00</string>
     <string name="confidence_indicator">Confidence Indicator</string>
     <string name="record_icon">record icon</string>
