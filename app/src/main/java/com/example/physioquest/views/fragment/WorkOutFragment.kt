@@ -119,7 +119,7 @@ class WorkOutFragment : Fragment(), MemoryManagement {
     private lateinit var resultViewModel: ResultViewModel
     private lateinit var timerTextView: TextView
     private lateinit var timerRecordIcon: ImageView
-    private lateinit var workoutRecyclerView: RecyclerView
+    // private lateinit var workoutRecyclerView: RecyclerView
     private lateinit var workoutAdapter: WorkoutAdapter
     private lateinit var homeViewModel: HomeViewModel
     private lateinit var addPlanViewModel: AddPlanViewModel
@@ -177,8 +177,8 @@ class WorkOutFragment : Fragment(), MemoryManagement {
         loadingTV = view.findViewById(R.id.loadingStatus)
         loadProgress = view.findViewById(R.id.loadingProgress)
         skipButton = view.findViewById(R.id.skipButton)
-        workoutRecyclerView = view.findViewById(R.id.workoutRecycleViewArea)
-        workoutRecyclerView.layoutManager = LinearLayoutManager(activity)
+        // workoutRecyclerView = view.findViewById(R.id.workoutRecycleViewArea)
+        // workoutRecyclerView.layoutManager = LinearLayoutManager(activity)
         yogaPoseImage = view.findViewById(R.id.yogaPoseSnapShot)
         return view
     }
@@ -419,7 +419,7 @@ class WorkOutFragment : Fragment(), MemoryManagement {
                             false
                         )
                     } else if (key in onlyExercise && value.repetition == data?.repetitions?.plus(1)) {
-                        workoutRecyclerView.visibility = View.VISIBLE
+                        // workoutRecyclerView.visibility = View.VISIBLE
                         if (isAllWorkoutFinished) {
                             completeAllExercise.visibility = View.VISIBLE
                         } else {
@@ -493,13 +493,13 @@ class WorkOutFragment : Fragment(), MemoryManagement {
                         // update the display list of all exercise progress when the increment happen
                         val exerciseList = exerciseLog.getExerciseDataList()
                         workoutAdapter = WorkoutAdapter(exerciseList, databaseExercisePlan)
-                        workoutRecyclerView.adapter = workoutAdapter
+                        // workoutRecyclerView.adapter = workoutAdapter
                     } else if (key in onlyPose && value.confidence > 0.5) {
 
                         if (key !== previousKey || value.confidence !== previousConfidence) {
                             // Implementation of pose confidence
                             displayConfidence(key, value.confidence)
-                            workoutRecyclerView.visibility = View.GONE
+                            // workoutRecyclerView.visibility = View.GONE
                             completeAllExercise.visibility = View.GONE
                             currentExerciseTextView.visibility = View.VISIBLE
                             currentRepetitionTextView.visibility = View.GONE
@@ -531,7 +531,7 @@ class WorkOutFragment : Fragment(), MemoryManagement {
             if (!runOnce) {
                 val exerciseList = exerciseLog.getExerciseDataList()
                 workoutAdapter = WorkoutAdapter(exerciseList, databaseExercisePlan)
-                workoutRecyclerView.adapter = workoutAdapter
+                // workoutRecyclerView.adapter = workoutAdapter
                 runOnce = true
                 loadingTV.visibility = View.GONE
                 loadProgress.visibility = View.GONE
@@ -982,7 +982,7 @@ class WorkOutFragment : Fragment(), MemoryManagement {
         buttonCancelExercise.setOnClickListener(null)
         cameraFlipFAB.setOnClickListener(null)
         skipButton.setOnClickListener(null)
-        workoutRecyclerView.adapter = null
+        // workoutRecyclerView.adapter = null
     }
 
     override fun onDestroy() {
