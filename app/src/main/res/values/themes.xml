@@ -26,4 +26,16 @@
         <item name="android:paddingEnd">10dp</item>
         <item name="android:inputType">date</item>
     </style>
+
+    <style name="FrequencyButton" parent="Widget.AppCompat.Button">
+        <item name="android:layout_width">354dp</item>
+        <item name="android:layout_height">54dp</item>
+        <item name="android:layout_marginTop">12dp</item>
+        <item name="android:textSize">16dp</item>
+        <item name="android:textAllCaps">false</item>
+        <item name="android:background">@drawable/exercise_button_selector</item>
+        <item name="android:textColor">@drawable/exercise_text_selector</item>
+        <item name="backgroundTint">@null</item>
+
+    </style>
 </resources>
