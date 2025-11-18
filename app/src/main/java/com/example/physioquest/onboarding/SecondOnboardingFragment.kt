@@ -24,17 +24,17 @@ class SecondOnboardingFragment : Fragment() {
     private lateinit var painColors: List<Int>
 
     private val painDescriptions = arrayOf(
-        "No pain, feeling normal.",
-        "Very mild, barely noticeable.",
-        "Minor aches, distracting only if focused on.",
-        "Mild pain, easy to ignore most of the time.",
-        "Moderate pain, hard to ignore for long periods.",
-        "Distracting pain, prevents daily activities.",
-        "Strong pain, hard to concentrate.",
-        "Intense pain, physical activity severely limited.",
-        "Severe pain, constant focus required.",
-        "Extreme pain, totally disabling.",
-        "Worst possible pain, unconsciousness possible."
+        "No pain",
+        "Hardly notice pain",
+        "Notice pain, does not interfere with activities ",
+        "Sometimes distract me",
+        "Distracts me, can do usual activities",
+        "Interrupts some activities",
+        "Hard to ignore, avoid usual activities",
+        "Focus of attention, prevents doing daily activities",
+        "Awful, hard to do anything",
+        "Can't bear the pain, unable to do anything",
+        "As bad as it could be, nothing else matters"
     )
 
     override fun onCreateView(
