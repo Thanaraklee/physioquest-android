@@ -4,6 +4,8 @@ import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.pm.PackageManager
+import android.content.res.ColorStateList
+import android.graphics.Color
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -28,6 +30,7 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
+import androidx.cardview.widget.CardView
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -80,6 +83,7 @@ import java.util.Locale
 import java.util.Timer
 import java.util.TimerTask
 import kotlin.collections.iterator
+import kotlin.math.log
 
 /**
  * Fragment responsible for handling the workout process, camera usage, and exercise tracking.
@@ -131,6 +135,7 @@ class WorkOutFragment : Fragment(), MemoryManagement {
     private lateinit var cameraFlipFAB: FloatingActionButton
     private lateinit var confIndicatorView: ImageView
     private lateinit var currentExerciseTextView: TextView
+    private lateinit var preventExerciseTextView: TextView
     private lateinit var currentRepetitionTextView: TextView
     private lateinit var confidenceTextView: TextView
     private lateinit var cameraViewModel: CameraXViewModel
@@ -140,8 +145,13 @@ class WorkOutFragment : Fragment(), MemoryManagement {
     private lateinit var skipButton: Button
     private lateinit var textToSpeech: TextToSpeech
     private lateinit var yogaPoseImage: ImageView
+    private lateinit var yogaPoseContainerView: FrameLayout
     private lateinit var exerciseGifAdapter: ExerciseGifAdapter
     private var selectedExercise: String? = null
+
+    private lateinit var confidenceProgressView: ProgressBar
+    private lateinit var confidenceCard: CardView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (!allRuntimePermissionsGranted()) {
@@ -172,17 +182,22 @@ class WorkOutFragment : Fragment(), MemoryManagement {
         timerRecordIcon = view.findViewById(R.id.timerRecIcon)
         confIndicatorView = view.findViewById(R.id.confidenceIndicatorView)
         currentExerciseTextView = view.findViewById(R.id.currentExerciseText)
+        preventExerciseTextView = view.findViewById(R.id.preventExerciseText)
         currentRepetitionTextView = view.findViewById(R.id.currentRepetitionText)
-        confidenceTextView = view.findViewById(R.id.confidenceIndicatorTextView)
+//        confidenceTextView = view.findViewById(R.id.confidenceIndicatorTextView)
         completeAllExercise = view.findViewById(R.id.completedAllExerciseTextView)
         confIndicatorView.visibility = View.INVISIBLE
-        confidenceTextView.visibility = View.INVISIBLE
+//        confidenceTextView.visibility = View.INVISIBLE
         loadingTV = view.findViewById(R.id.loadingStatus)
         loadProgress = view.findViewById(R.id.loadingProgress)
         skipButton = view.findViewById(R.id.skipButton)
         // workoutRecyclerView = view.findViewById(R.id.workoutRecycleViewArea)
         // workoutRecyclerView.layoutManager = LinearLayoutManager(activity)
         yogaPoseImage = view.findViewById(R.id.yogaPoseSnapShot)
+        yogaPoseContainerView = view.findViewById(R.id.yogaPoseContainer)
+        confidenceProgressView = view.findViewById(R.id.confidenceProgress)
+        confidenceCard = view.findViewById(R.id.confidenceCard)
+        confidenceTextView = view.findViewById(R.id.confidenceText)
         return view
     }
 
@@ -197,8 +212,8 @@ class WorkOutFragment : Fragment(), MemoryManagement {
         startButton.visibility = View.VISIBLE
         gifContainer.visibility = View.GONE
         skipButton.visibility = View.GONE
-        val exerciseGifs = mutableListOf<Pair<String, Int>>()
 
+        val exerciseGifs = mutableListOf<Pair<String, Int>>()
 
         // start exercise button
         startButton.setOnClickListener {
@@ -386,12 +401,17 @@ class WorkOutFragment : Fragment(), MemoryManagement {
                         0f,     // confidence เริ่มต้น
                         false
                     )
+                    val drawableId = getDrawableResourceIdByExercise(targetClass)
+                    yogaPoseContainerView.visibility = View.VISIBLE
+                    yogaPoseImage.setImageResource(drawableId)
+                    yogaPoseImage.visibility = View.VISIBLE
                 }
                 // อัปเดต UI ตั้งแต่ต้น
                 currentExerciseTextView.text = selectedExerciseName
                 currentRepetitionTextView.text = "0"
                 currentExerciseTextView.visibility = View.VISIBLE
                 currentRepetitionTextView.visibility = View.VISIBLE
+                preventExerciseTextView.visibility = View.GONE
 
                 // Handle skip button click here
                 // Transition to the "Start" button
@@ -439,7 +459,7 @@ class WorkOutFragment : Fragment(), MemoryManagement {
         var previousKey: String? = null
         var previousConfidence: Float? = null
 
-// Define sets for clarity
+        // Define sets for clarity
         val exercisePoses = setOf("squats", "lunges")   // exercise repetitions
         val yogaPoses = setOf("tree_pose", "warrior") // yoga confidence only
 
@@ -449,6 +469,7 @@ class WorkOutFragment : Fragment(), MemoryManagement {
             val selectedPose = selectedExercise ?: return@observe
             Log.d("ExerciseObserver", "Observing postureLiveData for selectedPose: $selectedPose, targetClass: $targetClass")
 
+
             for ((key, value) in mapResult) {
                 // Skip poses not in POSE_CLASSES or not the selected one
                 if (key !in POSE_CLASSES || key != targetClass) continue
@@ -456,15 +477,14 @@ class WorkOutFragment : Fragment(), MemoryManagement {
                 val data = exerciseLog.getExerciseData(key)
                 val isComplete = data?.isComplete ?: false
 
-                val drawableId = getDrawableResourceIdByExercise(key) // ฟังก์ชัน map key -> drawable
-                yogaPoseImage.setImageResource(drawableId)
-                yogaPoseImage.visibility = View.VISIBLE
+
 
                 // --- Exercise repetition handling ---
                 if (key in exercisePoses) {
                     val newRepetition = value.repetition
                     exerciseLog.addExercise(data?.planId, key, newRepetition, value.confidence, isComplete)
                     // Update UI
+                    preventExerciseTextView.visibility = View.GONE
                     currentExerciseTextView.text = exerciseNameToDisplay(key)
                     currentRepetitionTextView.text = newRepetition.toString()
                     currentExerciseTextView.visibility = View.VISIBLE
@@ -526,15 +546,39 @@ class WorkOutFragment : Fragment(), MemoryManagement {
                     )
 
                     if (key != previousKey || value.confidence != previousConfidence) {
+                        preventExerciseTextView.visibility = View.GONE
                         currentExerciseTextView.text = exerciseNameToDisplay(key)
                         currentExerciseTextView.visibility = View.VISIBLE
+                        confidenceCard.visibility = View.VISIBLE
+                        confidenceProgressView.visibility = View.VISIBLE
+                        confidenceTextView.visibility = View.VISIBLE
+                        val selectedPose = selectedExercise ?: return@observe
+                        Log.d("ExerciseObserver", "Yoga $key ,$selectedPose, $value detected with confidence ${value.confidence}")
 
-                        confidenceTextView.text = getString(
-                            R.string.confidence_percentage,
-                            (value.confidence * 100).toInt()
-                        )
-                        confidenceTextView.visibility =
-                            if (value.confidence > 0.8) View.VISIBLE else View.INVISIBLE
+//                        displayConfidence(key, value.confidence)
+//                        confidenceTextView.text = getString(
+//                            R.string.confidence_percentage,
+//                            (value.confidence * 100).toInt()
+//                        )
+
+                        Log.d("ExerciseObserverP", "Calling displayConfidence(): progressBar=$confidenceProgressView, textView=$confidenceTextView")
+
+                        requireActivity().runOnUiThread {
+                            displayConfidence(
+                                key = selectedPose,
+                                confidence = value.confidence,
+                                progressBar = confidenceProgressView,
+                                accuracyText = confidenceTextView,
+                                cardView = confidenceCard
+                            )
+                        }
+
+//                        confidenceTextView.text = getString(
+//                            R.string.confidence_percentage,
+//                            (value.confidence * 100).toInt()
+//                        )
+//                        confidenceTextView.visibility =
+//                            if (value.confidence > 0.8) View.VISIBLE else View.INVISIBLE
 
                         // Hide exercise repetition
                         currentRepetitionTextView.visibility = View.GONE
@@ -624,29 +668,55 @@ class WorkOutFragment : Fragment(), MemoryManagement {
         currentRepetitionTextView.text = "count: " + data?.repetitions.toString()
     }
 
+    private fun displayConfidence(
+        key: String,
+        confidence: Float,
+        progressBar: ProgressBar,
+        accuracyText: TextView,
+        cardView: CardView
+    ) {
+        val percentage = (confidence * 100).toInt().coerceIn(0, 100)
+        Log.d("ExerciseObserverPercentage", "$confidence detected with confidence $percentage")
+        // อัปเดต ProgressBar และข้อความ
+        progressBar.progress = percentage
+//        val red = (255 * (1f - confidence)).toInt()
+//        val green = (255 * confidence).toInt()
+//        val startColor = Color.rgb(255, 83, 83)  // สีแดง
+//        val endColor = Color.rgb(8, 144, 0)     // สีเขียว
+
+        val r = ((1 - confidence) * 255 + confidence * 8).toInt()
+        val g = ((1 - confidence) * 83 + confidence * 144).toInt()
+        val b = ((1 - confidence) * 83 + confidence * 0).toInt()
+
+        progressBar.progressTintList = ColorStateList.valueOf(Color.rgb(r, g, b))
+//        progressBar.progressTintList = ColorStateList.valueOf(Color.rgb(red, green, 0))
+        accuracyText.text = "Accuracy: $percentage%"
+    }
+
     /**
      * Display confidence level with different colors based on thresholds
      */
-    private fun displayConfidence(key: String, confidence: Float) {
-        confIndicatorView.visibility = View.VISIBLE
-        yogaPoseImage.visibility = View.VISIBLE
-        if (confidence <= 0.6f) {
-            confIndicatorView.backgroundTintList =
-                ContextCompat.getColorStateList(requireContext(), R.color.red)
-        } else if (confidence > 0.6f && confidence <= 0.7f) {
-            confIndicatorView.backgroundTintList =
-                ContextCompat.getColorStateList(requireContext(), R.color.orange)
-        } else if (confidence > 0.7f && confidence <= 0.8f) {
-            confIndicatorView.backgroundTintList =
-                ContextCompat.getColorStateList(requireContext(), R.color.yellow)
-        } else if (confidence > 0.8f && confidence <= 0.9f) {
-            confIndicatorView.backgroundTintList =
-                ContextCompat.getColorStateList(requireContext(), R.color.lightGreen)
-        } else {
-            confIndicatorView.backgroundTintList =
-                ContextCompat.getColorStateList(requireContext(), R.color.green)
-        }
-    }
+//    private fun displayConfidence(key: String, confidence: Float) {
+//        confIndicatorView.visibility = View.VISIBLE
+//        yogaPoseContainerView.visibility = View.VISIBLE
+//        yogaPoseImage.visibility = View.VISIBLE
+//        if (confidence <= 0.6f) {
+//            confIndicatorView.backgroundTintList =
+//                ContextCompat.getColorStateList(requireContext(), R.color.red)
+//        } else if (confidence > 0.6f && confidence <= 0.7f) {
+//            confIndicatorView.backgroundTintList =
+//                ContextCompat.getColorStateList(requireContext(), R.color.orange)
+//        } else if (confidence > 0.7f && confidence <= 0.8f) {
+//            confIndicatorView.backgroundTintList =
+//                ContextCompat.getColorStateList(requireContext(), R.color.yellow)
+//        } else if (confidence > 0.8f && confidence <= 0.9f) {
+//            confIndicatorView.backgroundTintList =
+//                ContextCompat.getColorStateList(requireContext(), R.color.lightGreen)
+//        } else {
+//            confIndicatorView.backgroundTintList =
+//                ContextCompat.getColorStateList(requireContext(), R.color.green)
+//        }
+//    }
 
     /**
      * Bind all camera use cases (preview and analysis)
