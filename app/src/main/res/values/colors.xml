@@ -13,4 +13,13 @@
     <color name="lightGreen">#95FD2E</color>
     <color name="green">#00B312</color>
     <color name="gray_black">#706565</color>
+    <color name="blue_light">#86CDF9</color>
+    <color name="blue_medium">#85D4B7</color>
+    <color name="green_light">#88D977</color>
+    <color name="green_medium">#99DD56</color>
+    <color name="orange_light">#E7A42F</color>
+    <color name="orange_medium">#DD7327</color>
+    <color name="red_light">#D03F18</color>
+    <color name="red_dark">#C60D0D</color>
+    <color name="default_pain_color">#FFCCCCCC</color>
 </resources>
