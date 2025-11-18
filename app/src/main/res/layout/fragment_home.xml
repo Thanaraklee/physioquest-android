@@ -22,7 +22,7 @@
         android:layout_gravity="center_horizontal"
         android:layout_marginTop="69dp"
         android:text="My activity"
-        android:textColor="@color/gray_black"
+        android:textColor="@color/textGray"
         android:textSize="20dp"
         android:textStyle="bold" />
     <ImageView
@@ -119,7 +119,7 @@
         android:layout_marginStart="@dimen/margin_large"
         android:layout_marginTop="16dp"
         android:text="Daily Plan"
-        android:textColor="@color/gray_black"
+        android:textColor="@color/textGray"
         android:textSize="20dp"
         android:textStyle="bold"
         app:layout_constraintStart_toStartOf="parent"
