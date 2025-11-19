@@ -6,44 +6,44 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@android:color/white"
+    android:paddingLeft="20dp"
+    android:paddingRight="20dp"
+    android:scrollbars="none"
     tools:context=".onboarding.FirstOnboardingFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-       >
+        android:orientation="vertical">
 
-
+        <!-- HEADER IMAGE -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginTop="142dp"
+            android:layout_marginTop="45dp"
             android:layout_marginHorizontal="45dp"
             android:gravity="center_vertical">
 
             <ImageView
-                android:layout_width="317dp"
-                android:layout_height="65dp"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
                 android:src="@drawable/where_do_you_feel_pain"
                 android:contentDescription="Logo" />
-
-
         </LinearLayout>
 
+        <!-- MY PAIN POINT TITLE -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="95dp"
             android:layout_marginHorizontal="19dp"
             android:text="My Pain Point"
+            android:textColor="@color/gray_black"
             android:textSize="18sp"
-            android:textColor="@android:color/black"
-            android:textStyle="bold" />
+            android:fontFamily="@font/poppins_medium"/>
 
-
-
+        <!-- SELECTED PAIN AREA -->
         <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -55,6 +55,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="39dp"
                 android:text="None"
+                android:textColor="@color/gray_black"
+                android:fontFamily="@font/poppins_medium"
                 android:gravity="center_horizontal"
                 android:visibility="visible" />
 
@@ -64,12 +66,11 @@
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="39dp"
                 android:visibility="gone"
-                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
-                android:orientation="horizontal" />
-
+                android:orientation="horizontal"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
         </FrameLayout>
 
-
+        <!-- PAIN AREA TITLE -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -77,9 +78,10 @@
             android:layout_marginHorizontal="19dp"
             android:text="Pain Area"
             android:textSize="18sp"
-            android:textColor="@android:color/black"
-            android:textStyle="bold" />
+            android:textColor="@color/gray_black"
+            android:fontFamily="@font/poppins_medium" />
 
+        <!-- PAIN AREA RECYCLER -->
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_pain_area"
             android:layout_width="match_parent"
@@ -89,8 +91,9 @@
             android:overScrollMode="never"
             app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
             tools:itemCount="5"
+            android:textColor="@color/gray_black"
             tools:listitem="@layout/list_item_pain_area" />
 
-
     </LinearLayout>
+
 </ScrollView>

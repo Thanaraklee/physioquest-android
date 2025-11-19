@@ -29,6 +29,7 @@
             android:layout_marginTop="85dp"
             android:fontFamily="@font/poppins_medium"
             android:text="@string/login"
+            android:textColor="@color/gray_black"
             android:textSize="20sp" />
 
         <EditText
@@ -44,7 +45,7 @@
             android:inputType="text"
             android:paddingStart="29dp"
             android:paddingEnd="29dp"
-            android:textColor="@color/black" />
+            android:textColorHint="#878282" />
 
         <EditText
             android:id="@+id/password_input"
@@ -59,7 +60,7 @@
             android:inputType="textPassword"
             android:paddingStart="29dp"
             android:paddingEnd="29dp"
-            android:textColor="@color/black" />
+            android:textColorHint="#878282" />
 
         <GridLayout
             android:layout_width="wrap_content"
