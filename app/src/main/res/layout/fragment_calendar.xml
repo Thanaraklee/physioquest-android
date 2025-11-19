@@ -12,6 +12,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center_horizontal"
+        android:layout_marginTop="-60dp"
         android:src="@drawable/calendar_appointment" />
 
     <TextView
@@ -19,11 +20,11 @@
         android:layout_height="wrap_content"
         android:layout_marginStart="@dimen/margin_large"
         android:text="Near Me"
-        android:textColor="@color/textGray"
-        android:textSize="20dp"
-        android:textStyle="bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="5dp"
+        android:textColor="#878282"
+        android:fontFamily="@font/poppins_medium"
+        android:textSize="20dp"/>
     <ImageView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -35,9 +36,9 @@
         android:layout_marginStart="@dimen/margin_large"
         android:layout_marginTop="12dp"
         android:text="Available Schedule"
-        android:textColor="@color/textGray"
+        android:textColor="#878282"
         android:textSize="20dp"
-        android:textStyle="bold"
+        android:fontFamily="@font/poppins_medium"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
     <ImageView
