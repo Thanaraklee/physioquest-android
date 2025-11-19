@@ -1,57 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    tools:context=".onboarding.FirstOnboardingFragment">
+    android:padding="24dp"
+    android:background="@android:color/white"
+    tools:context=".onboarding.ThirdOnboardingFragment">
 
-    <!-- FrameLayout to contain background image and overlay -->
-    <FrameLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <!-- Background image -->
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:contentDescription="@string/equipment_description"
-            android:scaleType="fitXY"
-            android:src="@drawable/equipment3" />
-
-        <!-- ImageView for the overlay -->
-        <ImageView
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:layout_marginTop="350dp"
-            android:alpha="0.4"
-            android:contentDescription="@string/overlay"
-            android:scaleType="fitXY"
-            android:src="@drawable/overlay" />
-
-    </FrameLayout>
-
-    <!-- Main title -->
-    <TextView
-        android:id="@+id/textView"
+    <LinearLayout
+        android:id="@+id/header_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="5dp"
-        android:gravity="center"
-        android:text="@string/hassle_free_repetition_tracking"
-        android:textSize="32sp"
+        android:orientation="horizontal"
+        android:layout_marginTop="142dp"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/logo_icon"
+            android:layout_width="333dp"
+            android:layout_height="66dp"
+            android:src="@drawable/how_often"
+            android:contentDescription="Logo" />
+
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="87dp"
+        android:layout_marginBottom="23dp"
+        android:text="Exercise Frequency"
+        android:textSize="18sp"
+        android:textColor="@android:color/black"
         android:textStyle="bold" />
 
-    <!-- Sub title -->
-    <TextView
-        android:id="@+id/textView2"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center_horizontal"
-        android:layout_marginBottom="0dp"
-        android:gravity="center"
-        android:text="@string/counting_made_easier"
-        android:textSize="22sp" />
+    <Button
+        android:id="@+id/btn_freq_1_3"
+        style="@style/FrequencyButton"
+        android:text="1 - 3 Days" />
+
+    <Button
+        android:id="@+id/btn_freq_3_5"
+        style="@style/FrequencyButton"
+        android:text="3 - 5 Days" />
+
+    <Button
+        android:id="@+id/btn_freq_5_7"
+        style="@style/FrequencyButton"
+        android:text="5 - 7 Days" />
 
 </LinearLayout>
